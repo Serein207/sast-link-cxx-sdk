@@ -10,47 +10,47 @@
     <img src="https://img.shields.io/badge/language-C%2B%2B20-orange.svg">
 </p>
 
-<p align=center>English | <a href="./README_zh.md">简体中文</a></p>
+<p align=center> <a href="./README.md">English</a> |简体中文</p>
 
-## Brief
+## 简介
 
-[SAST Link](https://github.com/NJUPT-SAST/sast-link-backend) is a comprehensive personnel management system and OAuth designed to provide a secure and efficient way to manage and authorize access to your applications and services.
+[SAST Link](https://github.com/NJUPT-SAST/sast-link-backend) 是一个综合人员管理系统和 OAuth，旨在提供一种安全高效的方式来管理和授权访问您的应用程序和服务。
 
-This project is the cross-platform SDK for SAST Link which written in C++. If you're interested in the frontend, please visit SAST Link [frontend](https://github.com/NJUPT-SAST/sast-link).
+此项目是使用 C++ 编写的跨平台 SAST Link SDK。如果您对前端感兴趣，请访问 SAST Link [frontend](https://github.com/NJUPT-SAST/sast-link).
 
 > [!WARNING]
 >
-> The project is still under development and may not be stable. Please use it with caution.
+> 项目仍在开发中，并且不太稳定。请谨慎使用。
 
-## Features
+## 特性
 
-- C++20 coroutine support
-- Cross platform
+- C++20 协程
+- 跨平台
 
-## Start
+## 开始
 
-### Prerequisites
+### 预设条件
 
-Compiler & Build Tools
+编译和构建工具
 
-- A compiler that supports C++20 or later
-- CMake 3.15 or later
+- 支持C++20或更高版本的编译器
+- CMake 3.15 或更高版本
 
-Dependencies
+依赖项
 
 - [Boost.Beast](https://github.com/boostorg/beast)
 - [Boost.Url](https://github.com/boostorg/url)
 - [OpenSSL](https://github.com/openssl/openssl)
 
-### Clone & Build
+### 克隆和构建
 
-Clone the repository:
+克隆仓库：
 
 ```shell
 git clone https://github.com/NJUPT-SAST/sast-evento-desktop.git
 ```
 
-Build the project:
+构建项目：
 
 ```shell
 cmake -B build
@@ -59,14 +59,14 @@ cmake --build build
 
 > [!NOTE]
 > 
-> if you want to build the example, you can use the following command:
+> 如果您想构建示例，请使用以下命令：
 > 
 > ```shell
 > cmake -B build -DBUILD_EXAMPLE=ON
 > cmake --build build
 > ```
 
-### Usage
+### 使用
 
 CMakeLists.txt
 
@@ -110,7 +110,7 @@ int main() {
 
 ## TODO List
 
-- [ ] async get code from sast link
-- [ ] add more reliable error handling
-- [ ] add unit tests
-- [ ] add more api support
+- [ ] 异步获得link返回的code
+- [ ] 添加更可靠的错误处理
+- [ ] 添加单元测试
+- [ ] 添加更多 API 支持
