@@ -97,13 +97,11 @@ main.cc
 
 namespace beast = boost::beast;
 namespace net = boost::asio;
-using tcp = net::ip::tcp;
 
 int main() {
-  boost::asio::io_context ioc;
+  net::io_context ioc;
   LoginController controller(ioc);
-  net::co_spawn(ioc, controller.begin_login_via_sast_link(),
-                boost::asio::detached);
+  net::co_spawn(ioc, controller.begin_login_via_sast_link(), net::detached);
   ioc.run();
 }
 ```
