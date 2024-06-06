@@ -1,8 +1,9 @@
+#define BOOST_ASIO_HAS_CO_AWAIT
+
 #include <Controller/LoginController.h>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
 
-namespace beast = boost::beast;
 namespace net = boost::asio;
 
 int main() {

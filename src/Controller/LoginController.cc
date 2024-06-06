@@ -183,7 +183,7 @@ static void open_url(std::string_view url) {
 #ifdef __linux__
   system(("xdg-open "s + url_str).c_str());
 #elif defined(_WIN32)
-  system(("start "s + url_str).c_str());
+  system(("start \"\" "s + url_str).c_str());
 #elif defined(__APPLE__)
   system(("open "s + url_str).c_str());
 #else
