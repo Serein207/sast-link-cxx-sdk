@@ -2,7 +2,6 @@
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
 
-namespace beast = boost::beast;
 namespace net = boost::asio;
 
 int main() {
