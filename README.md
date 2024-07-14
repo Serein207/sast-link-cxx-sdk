@@ -71,7 +71,7 @@ cmake --build build
 CMakeLists.txt
 
 ```cmake
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.15)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -91,24 +91,34 @@ target_link_libraries(example PRIVATE
 main.cc
 
 ```cpp
-#include <Controller/LoginController.h>
+#include <sast_link.h>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
+#include <boost/asio/io_context.hpp>
+#include <iostream>
 
-namespace beast = boost::beast;
 namespace net = boost::asio;
 
 int main() {
-  net::io_context ioc;
-  LoginController controller(ioc);
-  net::co_spawn(ioc, controller.begin_login_via_sast_link(), net::detached);
-  ioc.run();
+    net::io_context ioc;
+    net::co_spawn(
+        ioc,
+        []() -> net::awaitable<void> {
+            auto result = co_await sast_link::login();
+            if (result) {
+                std::cout << "code: " << result.value() << '\n';
+            } else {
+                std::cerr << "Login failed: " << result.error() << '\n';
+            }
+        },
+        net::detached);
+    ioc.run();
 }
 ```
 
 ## TODO List
 
-- [ ] async get code from sast link
-- [ ] add more reliable error handling
+- [x] async get code from sast link
+- [x] add more reliable error handling
 - [ ] add unit tests
 - [ ] add more api support
