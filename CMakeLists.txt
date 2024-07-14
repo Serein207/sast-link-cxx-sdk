@@ -16,6 +16,7 @@ endif()
 
 cmake_policy(SET CMP0167 NEW)
 
+find_package(spdlog REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system url beast)
 find_package(OpenSSL 3.0 REQUIRED)
 
@@ -28,7 +29,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE controller server)
 
 target_include_directories(
     ${PROJECT_NAME}
-    PUBLIC include
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 if(BUILD_EXAMPLE_EXECUTABLE)

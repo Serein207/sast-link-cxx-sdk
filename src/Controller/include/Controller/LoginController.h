@@ -12,18 +12,14 @@
 
 class LoginController {
 public:
-    explicit LoginController(boost::asio::io_context& ioc)
-        : _ioc(ioc) {}
-    boost::asio::awaitable<void> begin_login_via_sast_link();
+    boost::asio::awaitable<void> begin_login_via_sast_link(std::string& auth_code);
+    boost::asio::awaitable<void> stop_server();
     ~LoginController();
 
 private:
-    boost::asio::awaitable<void> setup_server();
-    boost::asio::awaitable<void> stop_server();
+    boost::asio::awaitable<void> setup_server(std::string& auth_code);
 
     std::unique_ptr<HttpServer> _login_redirect_server = nullptr;
     std::string _state;
     std::string _code_verifier;
-
-    boost::asio::io_context& _ioc;
 };

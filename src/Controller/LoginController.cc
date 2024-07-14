@@ -2,6 +2,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/co_spawn.hpp>
+#include <boost/asio/this_coro.hpp>
 #include <boost/beast/http/detail/type_traits.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
@@ -21,6 +22,7 @@
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+#include <spdlog/spdlog.h>
 #include <string>
 #include <string_view>
 
@@ -60,100 +62,113 @@ static std::string gen_code_challenge_s256(std::string_view code_verifier) {
     return base64_encoded;
 }
 
-net::awaitable<void> LoginController::setup_server() {
+net::awaitable<void> LoginController::setup_server(std::string& auth_code) {
     if (_login_redirect_server) {
         co_return;
     }
     _login_redirect_server = std::make_unique<HttpServer>();
-    _login_redirect_server->route("/", [this](const http::request<http::string_body> request) {
-        // OAuth 2.0 Redirect Uri
-        auto status_code = http::status::ok;
-        std::string error_description;
+    _login_redirect_server
+        ->route("/", [this, &auth_code](const http::request<http::string_body> request) {
+            // OAuth 2.0 Redirect Uri
+            auto status_code = http::status::ok;
+            std::string error_description;
 
-        switch (request.method()) {
-        case http::verb::get: {
-            boost::urls::url_view url = request.target().substr(request.target().find_first_of('?'));
-            auto params = url.encoded_params();
+            switch (request.method()) {
+            case http::verb::get: {
+                boost::urls::url_view url = request.target().substr(
+                    request.target().find_first_of('?'));
+                auto params = url.encoded_params();
 
-            // check for state
-            if (!params.contains("state")) {
+                // check for state
+                if (!params.contains("state")) {
+                    status_code = http::status::bad_request;
+                    error_description = "state is missing";
+                    break;
+                }
+                auto state = params.find("state")->value.decode();
+                if (state != this->_state) {
+                    status_code = http::status::bad_request;
+                    error_description = "state is invalid";
+                    break;
+                }
+                // clear State, as it should be used only once
+                this->_state.clear();
+
+                // check for error
+                if (params.contains("error")) {
+                    error_description = params.contains("error_description")
+                                            ? params.find("error_description")->value.decode()
+                                            : params.find("error")->value.decode();
+                    status_code = http::status::bad_request;
+                    break;
+                }
+
+                // check for code
+                if (params.contains("code")) {
+                    std::string code = params.find("code")->value.decode();
+                    auth_code = code;
+                    spdlog::info("Code: {}", code);
+                    break;
+                }
+
                 status_code = http::status::bad_request;
-                error_description = "state is missing";
                 break;
             }
-            auto state = params.find("state")->value.decode();
-            if (state != this->_state) {
-                status_code = http::status::bad_request;
-                error_description = "state is invalid";
+            case http::verb::options:
                 break;
-            }
-            // clear State, as it should be used only once
-            this->_state.clear();
-
-            // check for error
-            if (params.contains("error")) {
-                error_description = params.contains("error_description")
-                                        ? params.find("error_description")->value.decode()
-                                        : params.find("error")->value.decode();
+            default:
                 status_code = http::status::bad_request;
                 break;
             }
 
-            // check for code
-            if (params.contains("code")) {
-                std::string code = params.find("code")->value.decode();
-                // TODO: exchange code for token
-                std::cout << "code: " << code << std::endl;
-                break;
-            }
+            http::response<http::string_body> res{status_code, request.version()};
+            std::ifstream ifs;
+            if (status_code == http::status::ok) {
+                res = http::response<http::string_body>(http::status::ok,
+                                                        request.version(),
+                                                        "200 OK");
+                res.set(http::field::content_type, "text/html");
 
-            status_code = http::status::bad_request;
-            break;
-        }
-        case http::verb::options:
-            break;
-        default:
-            status_code = http::status::bad_request;
-            break;
-        }
-
-        http::response<http::string_body> res{status_code, request.version()};
-        std::ifstream ifs;
-        if (status_code == http::status::ok) {
-            res = http::response<http::string_body>(http::status::ok, request.version(), "200 OK");
-            res.set(http::field::content_type, "text/html");
-
-            ifs.open(HTML_DIR "/ok.html", std::ios::in);
-            if (ifs.is_open()) {
-                res.body() = std::string(std::istreambuf_iterator<char>(ifs),
-                                         std::istreambuf_iterator<char>());
+                ifs.open(HTML_DIR "/ok.html", std::ios::in);
+                if (ifs.is_open()) {
+                    res.body() = std::string(std::istreambuf_iterator<char>(ifs),
+                                             std::istreambuf_iterator<char>());
+                } else {
+                    spdlog::error("Error: file \"ok.html\" not exists");
+                    res.body() = "OK";
+                }
             } else {
-                std::cerr << "Error: file not exists" << std::endl;
-                res.body() = "OK";
+                res = http::response<http::string_body>(status_code,
+                                                        request.version(),
+                                                        error_description);
+                res.set(http::field::content_type, "text/html");
+                ifs.open(HTML_DIR "/error.html", std::ios::in);
+                if (ifs.is_open()) {
+                    res.body() = std::string(std::istreambuf_iterator<char>(ifs),
+                                             std::istreambuf_iterator<char>());
+                    boost::replace_first(res.body(), "%1", error_description);
+                } else {
+                    spdlog::error("Error: file \"error.html\" not exists");
+                    res.body() = "Error";
+                }
             }
-        } else {
-            res = http::response<http::string_body>(status_code,
-                                                    request.version(),
-                                                    error_description);
-            res.set(http::field::content_type, "text/html");
-            ifs.open(HTML_DIR "/error.html", std::ios::in);
-            if (ifs.is_open()) {
-                res.body() = std::string(std::istreambuf_iterator<char>(ifs),
-                                         std::istreambuf_iterator<char>());
-                boost::replace_all(res.body(), "%1", error_description);
-            } else {
-                std::cerr << "Error: file does not exist" << std::endl;
-                res.body() = "Error";
-            }
-        }
-        ifs.close();
+            ifs.close();
 
-        res.set("Access-Control-Allow-Origin", "https://link.sast.fun");
-        res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
-        res.set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization");
-        return res;
-    });
-    co_await _login_redirect_server->listen("127.0.0.1", 1919);
+            res.set("Access-Control-Allow-Origin", "https://link.sast.fun");
+            res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+            res.set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization");
+            return res;
+        });
+    // net::co_spawn(co_await net::this_coro::executor,
+    //               _login_redirect_server->listen("127.0.0.1", 1919),
+    //               [](std::exception_ptr e) {
+    //                   if (e)
+    //                       try {
+    //                           std::rethrow_exception(e);
+    //                       } catch (std::exception& e) {
+    //                           spdlog::error("Error in acceptor: {}", e.what());
+    //                       }
+    //               });
 }
 
 net::awaitable<void> LoginController::stop_server() {
@@ -161,6 +176,7 @@ net::awaitable<void> LoginController::stop_server() {
         co_await _login_redirect_server->stop();
         _login_redirect_server.reset();
     }
+    spdlog::info("server stopped");
 }
 
 static void open_url(std::string_view url) {
@@ -172,12 +188,12 @@ static void open_url(std::string_view url) {
 #elif defined(__APPLE__)
     system(("open "s + url_str).c_str());
 #else
-    std::cerr << "Cannot open browser on this OS" << std::endl;
+    spdlog::error("Cannot open browser on this OS");
 #endif
 }
 
-net::awaitable<void> LoginController::begin_login_via_sast_link() {
-    co_await setup_server();
+net::awaitable<void> LoginController::begin_login_via_sast_link(std::string& auth_code) {
+    co_await setup_server(auth_code);
 
     this->_state = "xyz";
     this->_code_verifier = "sast_forever";
@@ -191,8 +207,9 @@ net::awaitable<void> LoginController::begin_login_via_sast_link() {
                          {"scope", "all"},
                          {"state", this->_state}});
 
-    std::cout << url << std::endl;
+    spdlog::info("URL: {}", url.data());
     open_url(url.data());
+    co_await _login_redirect_server->listen("127.0.0.1", 1919);
 }
 
 LoginController::~LoginController() = default;

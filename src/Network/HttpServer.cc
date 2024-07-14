@@ -16,8 +16,6 @@
 #include <boost/url/parse_path.hpp>
 #include <cassert>
 #include <cstdint>
-#include <exception>
-#include <iostream>
 #include <string>
 
 namespace beast = boost::beast;   // from <boost/beast.hpp>
@@ -45,17 +43,7 @@ net::awaitable<void> HttpServer::listen(const std::string& host, std::uint16_t p
 
     acceptor.listen(net::socket_base::max_listen_connections);
 
-    for (;;)
-        net::co_spawn(acceptor.get_executor(),
-                      do_session(tcp_stream(co_await acceptor.async_accept())),
-                      [](std::exception_ptr e) {
-                          if (e)
-                              try {
-                                  std::rethrow_exception(e);
-                              } catch (std::exception& e) {
-                                  std::cerr << "Exception: " << e.what() << std::endl;
-                              }
-                      });
+    co_await do_session(tcp_stream(co_await acceptor.async_accept()));
 }
 
 net::awaitable<void> HttpServer::do_session(tcp_stream stream) {
