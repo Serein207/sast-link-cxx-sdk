@@ -1,0 +1,21 @@
+{
+  "name": "demo",
+  "dependencies": [
+    {
+      "name": "boost-system",
+      "version>=": "1.84.0"
+    },
+    {
+      "name": "boost-beast",
+      "version>=": "1.84.0"
+    },
+    {
+      "name": "boost-url",
+      "version>=": "1.84.0"
+    },
+    {
+      "name": "openssl",
+      "version>=": "3.3.0"
+    }
+  ]
+}
