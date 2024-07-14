@@ -10,8 +10,10 @@ endif()
 
 project(sast-link VERSION 0.1.0 LANGUAGES CXX)
 
-if(NOT DEFINED BUILD_EXAMPLE)
-    option(BUILD_EXAMPLE "Build example executables" OFF)
+option(BUILD_EXAMPLE_EXECUTABLE "Build example executables" OFF)
+
+if(DEFINED BUILD_EXAMPLE)
+    set(BUILD_EXAMPLE_EXECUTABLE ON)
 endif()
 
 cmake_policy(SET CMP0167 NEW)
