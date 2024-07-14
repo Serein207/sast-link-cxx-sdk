@@ -8,6 +8,4 @@ project(example VERSION 0.1.0 LANGUAGES CXX)
 
 add_executable(example main.cc)
 
-target_link_libraries(example PRIVATE
-    sast-link
-)
+target_link_libraries(example PRIVATE sast-link)

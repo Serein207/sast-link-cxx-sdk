@@ -6,6 +6,4 @@ add_library(controller OBJECT ${SOURCES})
 
 target_include_directories(controller PUBLIC include)
 
-target_link_libraries(controller PUBLIC
-    server
-)
+target_link_libraries(controller PUBLIC server)

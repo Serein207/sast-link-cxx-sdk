@@ -5,8 +5,8 @@
 namespace net = boost::asio;
 
 int main() {
-  net::io_context ioc;
-  LoginController controller(ioc);
-  net::co_spawn(ioc, controller.begin_login_via_sast_link(), net::detached);
-  ioc.run();
+    net::io_context ioc;
+    LoginController controller(ioc);
+    net::co_spawn(ioc, controller.begin_login_via_sast_link(), net::detached);
+    ioc.run();
 }

@@ -15,22 +15,19 @@
 #include <string>
 
 class HttpServer {
-  using tcp = boost::asio::ip::tcp;
-  using tcp_stream = typename boost::beast::tcp_stream::rebind_executor<
-      boost::asio::use_awaitable_t<>::executor_with_default<
-          boost::asio::any_io_executor>>::other;
-  using Callback = std::function<
-      boost::beast::http::response<boost::beast::http::string_body>(
-          boost::beast::http::request<boost::beast::http::string_body>)>;
+    using tcp = boost::asio::ip::tcp;
+    using tcp_stream = typename boost::beast::tcp_stream::rebind_executor<
+        boost::asio::use_awaitable_t<>::executor_with_default<boost::asio::any_io_executor>>::other;
+    using Callback = std::function<boost::beast::http::response<boost::beast::http::string_body>(
+        boost::beast::http::request<boost::beast::http::string_body>)>;
 
 public:
-  void route(const std::string &path, Callback &&callback);
-  boost::asio::awaitable<void> listen(const std::string &host,
-                                      std::uint16_t port);
-  boost::asio::awaitable<void> stop();
+    void route(const std::string& path, Callback&& callback);
+    boost::asio::awaitable<void> listen(const std::string& host, std::uint16_t port);
+    boost::asio::awaitable<void> stop();
 
 private:
-  boost::asio::awaitable<void> do_session(tcp_stream stream);
+    boost::asio::awaitable<void> do_session(tcp_stream stream);
 
-  std::map<std::string, Callback> _route_map;
+    std::map<std::string, Callback> _route_map;
 };
