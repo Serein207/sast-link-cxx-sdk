@@ -18,9 +18,6 @@
 
 此项目是使用 C++ 编写的跨平台 SAST Link SDK。如果您对前端感兴趣，请访问 SAST Link [frontend](https://github.com/NJUPT-SAST/sast-link).
 
-> [!WARNING]
->
-> 项目仍在开发中，并且不太稳定。请谨慎使用。
 
 ## 特性
 

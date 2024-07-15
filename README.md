@@ -18,10 +18,6 @@
 
 This project is the cross-platform SDK for SAST Link which written in C++. If you're interested in the frontend, please visit SAST Link [frontend](https://github.com/NJUPT-SAST/sast-link).
 
-> [!WARNING]
->
-> The project is still under development and may not be stable. Please use it with caution.
-
 ## Features
 
 - C++20 coroutine support
