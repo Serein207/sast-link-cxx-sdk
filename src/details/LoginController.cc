@@ -1,39 +1,37 @@
 #include <Controller/LoginController.h>
-#include <boost/algorithm/string.hpp>
-#include <boost/asio/awaitable.hpp>
-#include <boost/asio/co_spawn.hpp>
-#include <boost/asio/this_coro.hpp>
-#include <boost/beast/http/detail/type_traits.hpp>
-#include <boost/beast/http/message.hpp>
-#include <boost/beast/http/status.hpp>
-#include <boost/beast/http/string_body.hpp>
-#include <boost/beast/http/verb.hpp>
-#include <boost/url.hpp>
-#include <boost/url/detail/url_impl.hpp>
-#include <boost/url/param.hpp>
-#include <boost/url/params_view.hpp>
-#include <boost/url/parse_query.hpp>
-#include <boost/url/url_view.hpp>
-#include <cstdlib>
 #include <fstream>
-#include <iostream>
-#include <memory>
+#include <boost/url.hpp>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <spdlog/spdlog.h>
-#include <string>
-#include <string_view>
+#include <boost/algorithm/string.hpp>
 
-namespace beast = boost::beast;   // from <boost/beast.hpp>
-namespace http = beast::http;     // from <boost/beast/http.hpp>
-namespace net = boost::asio;      // from <boost/asio.hpp>
-using tcp = boost::asio::ip::tcp; // from <boost/asio/ip/tcp.hpp>
+namespace beast = boost::beast;
+namespace http = beast::http;
+namespace net = boost::asio;
+namespace urls = boost::urls;
 
-using namespace std::string_literals;
-static constexpr std::string_view AUTH_SERVER_URL = "https://link.sast.fun/auth";
+static constexpr std::string_view AUTH_SERVER_URL = "http://link.sast.fun/auth";
 static constexpr std::string_view AUTH_CLIENT_ID = "381c34b9-14a4-4df9-a9db-40c2455be09f";
+
+namespace sast_link {
+namespace details {
+
+static void open_url(std::string_view url) {
+    using namespace std::string_literals;
+    std::string url_str = "\""s + url.data() + "\"";
+#ifdef __linux__
+    system(("xdg-open "s + url_str).c_str());
+#elif defined(_WIN32)
+    system(("start \"\" "s + url_str).c_str());
+#elif defined(_APPLE__)
+    system(("open "s + url_str).c_str());
+#else
+    spdlog::error("unsurppoted os");
+#endif
+}
 
 static std::string base64_encode(const unsigned char* input, size_t length) {
     BUF_MEM* buf_ptr = nullptr;
@@ -62,11 +60,32 @@ static std::string gen_code_challenge_s256(std::string_view code_verifier) {
     return base64_encoded;
 }
 
-net::awaitable<void> LoginController::setup_server(std::string& auth_code) {
+boost::asio::awaitable<void> LoginController::begin_login_via_sast_link(code_t& auth_code) {
+    co_await setup_server(auth_code);
+
+    this->_state = "xyz";
+    this->_code_verifier = "sast_forever";
+
+    urls::url url(AUTH_SERVER_URL);
+    url.params().append({{"client_id", AUTH_CLIENT_ID},
+                         {"code_challenge", gen_code_challenge_s256(this->_code_verifier)},
+                         {"code_challenge_method", "S256"},
+                         {"redirect_uri", "http://localhost:1919/"},
+                         {"response_type", "code"},
+                         {"scope", "all"},
+                         {"state", this->_state}});
+
+    spdlog::info("URL: {}", url.data());
+    open_url(url.data());
+    co_await _login_redirect_server->listen("127.0.0.1", 1919);
+}
+
+net::awaitable<void> LoginController::setup_server(code_t& auth_code) {
     if (_login_redirect_server) {
         co_return;
     }
     _login_redirect_server = std::make_unique<HttpServer>();
+
     _login_redirect_server
         ->route("/", [this, &auth_code](const http::request<http::string_body> request) {
             // OAuth 2.0 Redirect Uri
@@ -107,7 +126,8 @@ net::awaitable<void> LoginController::setup_server(std::string& auth_code) {
                 if (params.contains("code")) {
                     std::string code = params.find("code")->value.decode();
                     auth_code = code;
-                    spdlog::info("Code: {}", code);
+                    spdlog::info("login succcess!");
+                    spdlog::debug("Code: {}", code);
                     break;
                 }
 
@@ -159,16 +179,6 @@ net::awaitable<void> LoginController::setup_server(std::string& auth_code) {
             res.set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization");
             return res;
         });
-    // net::co_spawn(co_await net::this_coro::executor,
-    //               _login_redirect_server->listen("127.0.0.1", 1919),
-    //               [](std::exception_ptr e) {
-    //                   if (e)
-    //                       try {
-    //                           std::rethrow_exception(e);
-    //                       } catch (std::exception& e) {
-    //                           spdlog::error("Error in acceptor: {}", e.what());
-    //                       }
-    //               });
 }
 
 net::awaitable<void> LoginController::stop_server() {
@@ -176,40 +186,10 @@ net::awaitable<void> LoginController::stop_server() {
         co_await _login_redirect_server->stop();
         _login_redirect_server.reset();
     }
-    spdlog::info("server stopped");
-}
-
-static void open_url(std::string_view url) {
-    std::string url_str = "\""s + url.data() + "\"";
-#ifdef __linux__
-    system(("xdg-open "s + url_str).c_str());
-#elif defined(_WIN32)
-    system(("start \"\" "s + url_str).c_str());
-#elif defined(__APPLE__)
-    system(("open "s + url_str).c_str());
-#else
-    spdlog::error("Cannot open browser on this OS");
-#endif
-}
-
-net::awaitable<void> LoginController::begin_login_via_sast_link(std::string& auth_code) {
-    co_await setup_server(auth_code);
-
-    this->_state = "xyz";
-    this->_code_verifier = "sast_forever";
-
-    boost::urls::url url(AUTH_SERVER_URL);
-    url.params().append({{"client_id", AUTH_CLIENT_ID},
-                         {"code_challenge", gen_code_challenge_s256(this->_code_verifier)},
-                         {"code_challenge_method", "S256"},
-                         {"redirect_uri", "http://localhost:1919/"},
-                         {"response_type", "code"},
-                         {"scope", "all"},
-                         {"state", this->_state}});
-
-    spdlog::info("URL: {}", url.data());
-    open_url(url.data());
-    co_await _login_redirect_server->listen("127.0.0.1", 1919);
+    spdlog::info("server has stopped");
 }
 
 LoginController::~LoginController() = default;
+
+} // namespace details
+} // namespace sast_link
