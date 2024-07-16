@@ -1,8 +1,6 @@
 file(GLOB_RECURSE SOURCES "*.cc" "*.h")
 
-add_compile_definitions(HTML_DIR="${CMAKE_CURRENT_SOURCE_DIR}/html")
-
-add_library(sast-link_details OBJECT ${SOURCES})
+add_library(sast-link_details ${LIB_TYPE} ${SOURCES})
 
 target_include_directories(
     sast-link_details
@@ -19,4 +17,10 @@ target_link_libraries(
         Boost::beast
         OpenSSL::SSL
         OpenSSL::Crypto
+)
+
+target_compile_definitions(
+    sast-link_details
+    PRIVATE
+        HTML_DIR="${CMAKE_CURRENT_SOURCE_DIR}/html"
 )
