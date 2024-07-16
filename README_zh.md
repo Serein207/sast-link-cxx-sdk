@@ -76,6 +76,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 project(example VERSION 0.1.0 LANGUAGES CXX)
 
+option(BUILD_SAST_LINK_SHARED ON) # default is OFF 
+
 add_subdirectory(sast-link-cxx-sdk)
 
 add_executable(example main.cc)
