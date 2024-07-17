@@ -76,7 +76,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 project(example VERSION 0.1.0 LANGUAGES CXX)
 
-option(BUILD_SAST_LINK_SHARED ON) # default is OFF 
+option(BUILD_SAST_LINK_SHARED ON) # default is ON 
 
 add_subdirectory(sast-link-cxx-sdk)
 
@@ -85,6 +85,10 @@ add_executable(example main.cc)
 target_link_libraries(example PRIVATE
     sast-link
 )
+
+if (WIN32)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}> COMMAND_EXPAND_LISTS)
+endif()
 ```
 
 main.cc
