@@ -4,37 +4,39 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-project(sast-link VERSION 0.1.0 LANGUAGES CXX)
+project(sast-link VERSION 1.3.0 LANGUAGES CXX)
 
 find_package(spdlog REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system url beast)
 find_package(OpenSSL 3.0 REQUIRED)
 
-set(BUILD_EXAMPLE BOOL "Build example")
+set(BUILD_EXAMPLE ON CACHE BOOL "Build sast-link example")
+set(BUILD_SAST_LINK_SHARED ON CACHE BOOL "Build sast-link shared library")
 
-if(BUILD_EXAMPLE STREQUAL "ON")
-    message("Build example")
+message("------------------sast-link-cxx-sdk------------------")
+message("Build example: ${BUILD_EXAMPLE}")
+message("Build shared library: ${BUILD_SAST_LINK_SHARED}")
+message("-----------------------------------------------------")
+
+if(BUILD_EXAMPLE)
     add_subdirectory(example)
 endif()
 
-set(BUILD_SAST_LINK_SHARED BOOL "Build shared library" OFF)
-
 set(LIB_TYPE STATIC)
 
-if(BUILD_SAST_LINK_SHARED STREQUAL "ON")
+if(BUILD_SAST_LINK_SHARED)
     set(LIB_TYPE SHARED)
-    message("Building SAST Link C++ SDK: shared library")
-else()
-    message("Building SAST Link C++ SDK: static library")
 endif()
 
 add_subdirectory(src/details)
 
 add_library(${PROJECT_NAME} ${LIB_TYPE} src/lib.cc)
 
-target_include_directories(
-    ${PROJECT_NAME}
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+include(GNUInstallDirs)
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE sast-link_details)
@@ -48,6 +50,19 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
     )
 endif()
 
-if(BUILD_SAST_LINK_SHARED STREQUAL "ON")
+if(BUILD_SAST_LINK_SHARED)
     target_compile_definitions(${PROJECT_NAME} PRIVATE SAST_LINK_SHARED)
 endif()
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+    PUBLIC_HEADER include/sast_link.h
+)
+
+install(TARGETS ${PROJECT_NAME}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME  DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
