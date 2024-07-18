@@ -1,6 +1,5 @@
 #pragma once
 #include <boost/asio.hpp>
-#include <boost/asio/awaitable.hpp>
 #include <boost/beast.hpp>
 #include <functional>
 #include <map>

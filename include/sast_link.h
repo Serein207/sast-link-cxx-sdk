@@ -5,14 +5,10 @@
 #include <utility>
 
 #ifdef SAST_LINK_SHARED
-#ifdef _WIN32
 #ifdef WIN_EXPORT
 #define _SAST_LINK_EXPORTED __declspec(dllexport)
 #else
 #define _SAST_LINK_EXPORTED __declspec(dllimport)
-#endif
-#else
-#define _SAST_LINK_EXPORTED
 #endif
 #else
 #define _SAST_LINK_EXPORTED
@@ -24,7 +20,7 @@ using code_t = std::string;
 using error_t = std::string; // error description
 
 template<typename T, typename E = error_t>
-class _SAST_LINK_EXPORTED Result {
+class Result {
 public:
     Result()
         : _status(State::Err)
@@ -116,8 +112,6 @@ private:
         E _err;
     };
 };
-
-_SAST_LINK_EXPORTED extern template class Result<code_t>;
 
 _SAST_LINK_EXPORTED boost::asio::awaitable<Result<code_t>> login();
 

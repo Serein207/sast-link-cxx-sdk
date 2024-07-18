@@ -5,9 +5,7 @@ namespace net = boost::asio;
 
 namespace sast_link {
 
-_SAST_LINK_EXPORTED template class Result<code_t>;
-
-_SAST_LINK_EXPORTED net::awaitable<Result<code_t>> login() {
+net::awaitable<Result<code_t>> login() {
     details::LoginController controller;
     std::string auth_code;
     try {

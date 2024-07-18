@@ -1,29 +1,70 @@
 {
-    "version": 8,
+    "version": 2,
     "configurePresets": [
         {
-            "name": "C++ Debug",
-            "displayName": "C++ Debug",
-            "description": "Configure for C++ Debug build",
+            "name": "msvc",
+            "displayName": "Windows MSVC amd64",
+            "description": "Using compilers for Visual Studio 17 2022 (x64 architecture)",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "toolset": {
+                "value": "host=x64",
+                "strategy": "external"
+            },
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/${presetName}",
+                "CMAKE_CXX_COMPILER": "cl.exe"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "hostOS": [
+                        "Windows"
+                    ]
+                }
             }
         },
         {
-            "name": "C++ Release",
-            "displayName": "C++ Release",
-            "description": "Configure for C++ Release build",
+            "name": "g++",
+            "displayName": "Linux g++",
+            "description": "Configure for C++ build",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install",
+                "CMAKE_CXX_COMPILER": "g++"
             }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "MSVC Debug",
+            "displayName": "Visual Studio Community 2022 Release - amd64 - Debug",
+            "configurePreset": "msvc",
+            "configuration": "Debug"
+        },
+        {
+            "name": "MSVC Release",
+            "displayName": "Visual Studio Community 2022 Release - amd64 - Release",
+            "configurePreset": "msvc",
+            "configuration": "Release"
+        },
+        {
+            "name": "g++ Debug",
+            "displayName": "Debug",
+            "configurePreset": "g++",
+            "configuration": "Debug"
+        },
+        {
+            "name": "g++ Release",
+            "displayName": "Release",
+            "configurePreset": "g++",
+            "configuration": "Release"
         }
     ]
 }

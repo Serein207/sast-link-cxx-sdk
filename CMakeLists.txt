@@ -10,7 +10,7 @@ find_package(spdlog REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system url beast)
 find_package(OpenSSL 3.0 REQUIRED)
 
-set(BUILD_EXAMPLE ON CACHE BOOL "Build sast-link example")
+set(BUILD_EXAMPLE OFF CACHE BOOL "Build sast-link example")
 set(BUILD_SAST_LINK_SHARED ON CACHE BOOL "Build sast-link shared library")
 
 message("------------------sast-link-cxx-sdk------------------")
@@ -39,14 +39,12 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE sast-link_details)
+target_link_libraries(${PROJECT_NAME} PRIVATE sast-link_details Boost::beast)
 
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
-    target_compile_options(${PROJECT_NAME} PRIVATE /EHsc /MTd /W2 /c)
-    target_compile_definitions(${PROJECT_NAME} 
-    PRIVATE 
-        WIN_EXPORT 
-        BOOST_ASIO_HAS_CO_AWAIT
+if(MSVC)
+    target_compile_definitions(${PROJECT_NAME}
+        PRIVATE
+        WIN_EXPORT
     )
 endif()
 
@@ -62,7 +60,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 install(TARGETS ${PROJECT_NAME}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME  DESTINATION ${CMAKE_INSTALL_BINDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
