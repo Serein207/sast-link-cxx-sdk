@@ -4,15 +4,13 @@
 #include <string>
 #include <utility>
 
-#ifdef SAST_LINK_SHARED
-#ifdef WIN_EXPORT
+#if defined(SAST_LINK_SHARED) && defined(WIN_EXPORT)
 #define _SAST_LINK_EXPORTED __declspec(dllexport)
-#else
+#elif defined(SAST_LINK_SHARED) && defined(_WIN32)
 #define _SAST_LINK_EXPORTED __declspec(dllimport)
-#endif
 #else
 #define _SAST_LINK_EXPORTED
-#endif
+#endif // SAST_LINK_SHARED
 
 namespace sast_link {
 

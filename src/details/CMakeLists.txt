@@ -1,6 +1,10 @@
 file(GLOB_RECURSE SOURCES "*.cc" "*.h")
 
-add_library(sast-link_details OBJECT ${SOURCES})
+if(WIN32)
+    add_library(sast-link_details OBJECT ${SOURCES})
+else()
+    add_library(sast-link_details ${LIB_TYPE} ${SOURCES})
+endif()
 
 target_include_directories(
     sast-link_details
