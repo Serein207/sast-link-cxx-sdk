@@ -1,12 +1,11 @@
 #include <Controller/LoginController.h>
-#include <fstream>
+#include <boost/algorithm/string.hpp>
 #include <boost/url.hpp>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <spdlog/spdlog.h>
-#include <boost/algorithm/string.hpp>
 
 namespace beast = boost::beast;
 namespace http = beast::http;
@@ -15,6 +14,98 @@ namespace urls = boost::urls;
 
 static constexpr std::string_view AUTH_SERVER_URL = "http://link.sast.fun/auth";
 static constexpr std::string_view AUTH_CLIENT_ID = "381c34b9-14a4-4df9-a9db-40c2455be09f";
+
+static constexpr std::string_view OK_RESPONSE = R"(
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Success</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+            padding: 50px;
+        }
+
+        .message {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="message" id="successMessage">
+        <p id="messageText">SAST Link Authorization Successful, please close this page</p>
+    </div>
+    <script>
+        var userLanguage = navigator.language || navigator.userLanguage;
+        var messages = {
+            'zh-CN': 'SAST Link授权成功，请关闭当前网页',
+            'en': 'SAST Link Authorization Successful, please close this page'
+        };
+        var messageText = document.getElementById('messageText');
+        if (messages[userLanguage]) {
+            messageText.textContent = messages[userLanguage];
+        }
+    </script>
+</body>
+
+</html>
+)";
+
+static constexpr std::string_view ERROR_RESPONSE = R"(
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authorization Failed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+            padding: 50px;
+        }
+
+        .message {
+            background-color: #FF5733;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="message" id="failureMessage">
+        <p id="messageText">Authorization Failed, error: </p>
+    </div>
+    <script>
+        var userLanguage = navigator.language || navigator.userLanguage;
+        var messages = {
+            'en': 'Authorization Failed, error: %1',
+            'zh-CN': '授权失败，错误信息：%1'
+        };
+        var messageText = document.getElementById('messageText');
+        if (messages[userLanguage]) {
+            messageText.textContent = messages[userLanguage];
+        }
+    </script>
+</body>
+
+</html>
+)";
 
 namespace sast_link {
 namespace details {
@@ -126,7 +217,7 @@ net::awaitable<void> LoginController::setup_server(code_t& auth_code) {
                 if (params.contains("code")) {
                     std::string code = params.find("code")->value.decode();
                     auth_code = code;
-                    spdlog::info("login succcess!");
+                    spdlog::info("login success!");
                     spdlog::debug("Code: {}", code);
                     break;
                 }
@@ -142,38 +233,21 @@ net::awaitable<void> LoginController::setup_server(code_t& auth_code) {
             }
 
             http::response<http::string_body> res{status_code, request.version()};
-            std::ifstream ifs;
             if (status_code == http::status::ok) {
                 res = http::response<http::string_body>(http::status::ok,
                                                         request.version(),
                                                         "200 OK");
-                res.set(http::field::content_type, "text/html");
-
-                ifs.open(HTML_DIR "/ok.html", std::ios::in);
-                if (ifs.is_open()) {
-                    res.body() = std::string(std::istreambuf_iterator<char>(ifs),
-                                             std::istreambuf_iterator<char>());
-                } else {
-                    spdlog::error("Error: file \"ok.html\" not exists");
-                    res.body() = "OK";
-                }
+                res.body() = OK_RESPONSE;
             } else {
                 res = http::response<http::string_body>(status_code,
                                                         request.version(),
                                                         error_description);
-                res.set(http::field::content_type, "text/html");
-                ifs.open(HTML_DIR "/error.html", std::ios::in);
-                if (ifs.is_open()) {
-                    res.body() = std::string(std::istreambuf_iterator<char>(ifs),
-                                             std::istreambuf_iterator<char>());
-                    boost::replace_first(res.body(), "%1", error_description);
-                } else {
-                    spdlog::error("Error: file \"error.html\" not exists");
-                    res.body() = "Error";
-                }
-            }
-            ifs.close();
 
+                boost::replace_first(ERROR_RESPONSE, "%1", error_description);
+                res.body() = ERROR_RESPONSE;
+            }
+
+            res.set(http::field::content_type, "text/html");
             res.set("Access-Control-Allow-Origin", "https://link.sast.fun");
             res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
             res.set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization");

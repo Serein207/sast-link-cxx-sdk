@@ -44,7 +44,7 @@ net::awaitable<void> HttpServer::do_session(tcp_stream stream) {
         http::request<http::string_body> request;
         co_await http::async_read(stream, buffer, request);
 
-        // handle requst
+        // handle request
         auto target = request.target();
         auto end_pos = target.find_first_of('?');
         auto route_path = target.substr(0, end_pos);

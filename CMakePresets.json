@@ -1,70 +1,90 @@
 {
-    "version": 2,
+    "version": 8,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 21,
+        "patch": 0
+    },
     "configurePresets": [
         {
-            "name": "msvc",
-            "displayName": "Windows MSVC amd64",
-            "description": "Using compilers for Visual Studio 17 2022 (x64 architecture)",
-            "generator": "Ninja",
+            "name": "base",
+            "hidden": true,
+            "generator": "Ninja Multi-Config",
             "binaryDir": "${sourceDir}/build",
-            "architecture": {
-                "value": "x64",
-                "strategy": "external"
-            },
-            "toolset": {
-                "value": "host=x64",
-                "strategy": "external"
-            },
+            "installDir": "${sourceDir}/build/install/${presetName}",
+            "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        },
+        {
+            "name": "native",
+            "inherits": "base",
+            "displayName": "Native"
+        },
+        {
+            "name": "msvc",
+            "inherits": "base",
+            "hidden": true,
             "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/${presetName}",
+                "CMAKE_C_COMPILER": "cl.exe",
                 "CMAKE_CXX_COMPILER": "cl.exe"
             },
-            "vendor": {
-                "microsoft.com/VisualStudioSettings/CMake/1.0": {
-                    "hostOS": [
-                        "Windows"
-                    ]
-                }
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
             }
         },
         {
-            "name": "g++",
-            "displayName": "Linux g++",
-            "description": "Configure for C++ build",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build",
-            "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install",
-                "CMAKE_CXX_COMPILER": "g++"
+            "name": "msvc-x64",
+            "inherits": "msvc",
+            "displayName": "MSVC x64",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            }
+        },
+        {
+            "name": "msvc-x86",
+            "inherits": "msvc",
+            "displayName": "MSVC x86",
+            "architecture": {
+                "value": "x86",
+                "strategy": "external"
+            }
+        },
+        {
+            "name": "msvc-arm64",
+            "inherits": "msvc",
+            "displayName": "MSVC ARM64",
+            "architecture": {
+                "value": "arm64",
+                "strategy": "external"
             }
         }
     ],
     "buildPresets": [
         {
-            "name": "MSVC Debug",
-            "displayName": "Visual Studio Community 2022 Release - amd64 - Debug",
-            "configurePreset": "msvc",
+            "name": "native",
+            "configurePreset": "native",
+            "displayName": "Ninja Multi-Config"
+        },
+        {
+            "name": "native-debug",
+            "inherits": "native",
+            "displayName": "Native Debug",
             "configuration": "Debug"
         },
         {
-            "name": "MSVC Release",
-            "displayName": "Visual Studio Community 2022 Release - amd64 - Release",
-            "configurePreset": "msvc",
+            "name": "native-release",
+            "inherits": "native",
+            "displayName": "Native Release",
             "configuration": "Release"
         },
         {
-            "name": "g++ Debug",
-            "displayName": "Debug",
-            "configurePreset": "g++",
-            "configuration": "Debug"
-        },
-        {
-            "name": "g++ Release",
-            "displayName": "Release",
-            "configurePreset": "g++",
-            "configuration": "Release"
+            "name": "native-relwithdebinfo",
+            "inherits": "native",
+            "displayName": "Native RelWithDebInfo",
+            "configuration": "RelWithDebInfo"
         }
-    ]
+    ],
+    "testPresets": []
 }

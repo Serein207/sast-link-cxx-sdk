@@ -22,9 +22,3 @@ target_link_libraries(
     OpenSSL::SSL
     OpenSSL::Crypto
 )
-
-target_compile_definitions(
-    sast-link_details
-    PRIVATE
-    HTML_DIR="${CMAKE_CURRENT_SOURCE_DIR}/html"
-)

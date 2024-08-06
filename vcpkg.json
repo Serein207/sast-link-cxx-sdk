@@ -1,22 +1,10 @@
 {
-  "name": "demo",
+  "name": "sast-link-cxx-sdk",
   "dependencies": [
-    {
-      "name": "boost-beast",
-      "version>=": "1.84.0"
-    },
-    {
-      "name": "boost-system",
-      "version>=": "1.84.0"
-    },
-    {
-      "name": "boost-url",
-      "version>=": "1.84.0"
-    },
-    {
-      "name": "openssl",
-      "version>=": "3.3.0"
-    },
+    "boost-beast",
+    "boost-system",
+    "boost-url",
+    "openssl",
     "spdlog"
   ]
 }
