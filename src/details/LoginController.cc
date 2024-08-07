@@ -7,6 +7,8 @@
 #include <openssl/sha.h>
 #include <spdlog/spdlog.h>
 
+namespace sast_link::details {
+
 namespace beast = boost::beast;
 namespace http = beast::http;
 namespace net = boost::asio;
@@ -94,8 +96,8 @@ static constexpr std::string_view ERROR_RESPONSE = R"(
     <script>
         var userLanguage = navigator.language || navigator.userLanguage;
         var messages = {
-            'en': 'Authorization Failed, error: %1',
-            'zh-CN': '授权失败，错误信息：%1'
+            'en': 'Authorization Failed',
+            'zh-CN': '授权失败'
         };
         var messageText = document.getElementById('messageText');
         if (messages[userLanguage]) {
@@ -107,20 +109,17 @@ static constexpr std::string_view ERROR_RESPONSE = R"(
 </html>
 )";
 
-namespace sast_link {
-namespace details {
-
 static void open_url(std::string_view url) {
     using namespace std::string_literals;
     std::string url_str = "\""s + url.data() + "\"";
 #ifdef __linux__
     system(("xdg-open "s + url_str).c_str());
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(_WIN64)
     system(("start \"\" "s + url_str).c_str());
 #elif defined(_APPLE__)
     system(("open "s + url_str).c_str());
 #else
-    spdlog::error("unsurppoted os");
+    spdlog::error("unsupported os");
 #endif
 }
 
@@ -242,8 +241,7 @@ net::awaitable<void> LoginController::setup_server(code_t& auth_code) {
                 res = http::response<http::string_body>(status_code,
                                                         request.version(),
                                                         error_description);
-
-                boost::replace_first(ERROR_RESPONSE, "%1", error_description);
+                spdlog::error("Auth failed: {}", error_description);
                 res.body() = ERROR_RESPONSE;
             }
 
@@ -265,5 +263,4 @@ net::awaitable<void> LoginController::stop_server() {
 
 LoginController::~LoginController() = default;
 
-} // namespace details
-} // namespace sast_link
+} // namespace sast_link::details

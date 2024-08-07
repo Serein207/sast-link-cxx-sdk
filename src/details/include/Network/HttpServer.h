@@ -4,6 +4,8 @@
 #include <functional>
 #include <map>
 
+namespace sast_link::details {
+
 class HttpServer {
     using tcp = boost::asio::ip::tcp;
     using tcp_stream = typename boost::beast::tcp_stream::rebind_executor<
@@ -22,3 +24,5 @@ private:
 
     std::map<path_t, Callback> _route_map;
 };
+
+} // namespace sast_link::details

@@ -8,6 +8,8 @@
 #include <boost/beast/version.hpp>
 #include <cassert>
 
+namespace sast_link::details {
+
 namespace beast = boost::beast;
 namespace http = beast::http;
 namespace net = boost::asio;
@@ -78,3 +80,5 @@ net::awaitable<void> HttpServer::stop() {
         tcp::acceptor(co_await net::this_coro::executor));
     acceptor.close();
 }
+
+} // namespace sast_link::details
