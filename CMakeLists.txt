@@ -4,13 +4,13 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-project(sast-link VERSION 1.4.2 LANGUAGES CXX)
+project(sast-link VERSION 1.4.3 LANGUAGES CXX)
 
 find_package(spdlog REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system url beast)
 find_package(OpenSSL 3.0 REQUIRED)
 
-set(BUILD_EXAMPLE OFF CACHE BOOL "Build sast-link example")
+set(BUILD_EXAMPLE OFF CACHE BOOL "Build sast-link example" FORCE)
 set(BUILD_SAST_LINK_SHARED ON CACHE BOOL "Build sast-link shared library")
 
 message("------------------sast-link-cxx-sdk------------------")

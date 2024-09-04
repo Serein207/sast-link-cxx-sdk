@@ -22,3 +22,12 @@ target_link_libraries(
     OpenSSL::SSL
     OpenSSL::Crypto
 )
+
+if (NOT MSVC)
+    install(TARGETS sast-link_details
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        )
+endif()
