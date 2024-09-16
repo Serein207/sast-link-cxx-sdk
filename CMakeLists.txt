@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-project(sast-link VERSION 1.4.3 LANGUAGES CXX)
+project(sast-link VERSION 1.5.0 LANGUAGES CXX)
 
 find_package(spdlog REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system url beast)
@@ -21,6 +21,7 @@ message("-----------------------------------------------------")
 if(BUILD_EXAMPLE)
     add_subdirectory(example)
 endif()
+
 
 set(LIB_TYPE STATIC)
 

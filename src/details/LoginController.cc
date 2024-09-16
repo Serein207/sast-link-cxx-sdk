@@ -153,7 +153,7 @@ static std::string gen_code_challenge_s256(std::string_view code_verifier) {
 boost::asio::awaitable<void> LoginController::begin_login_via_sast_link(code_t& auth_code) {
     co_await setup_server(auth_code);
 
-    this->_state = "xyz";
+    this->_state = generate_crypto_random_string(16);
     this->_code_verifier = "sast_forever";
 
     urls::url url(AUTH_SERVER_URL);
@@ -168,6 +168,21 @@ boost::asio::awaitable<void> LoginController::begin_login_via_sast_link(code_t& 
     spdlog::info("URL: {}", url.data());
     open_url(url.data());
     co_await _login_redirect_server->listen("127.0.0.1", 1919);
+}
+
+std::string LoginController::generate_crypto_random_string(int length) {
+    // FIXME
+    // !!! SEVERE SECURITY WARNING !!!
+    // 当前实现的熵池可能不满足密码学的要求
+
+    const char characters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    static std::random_device randomEngine;
+    std::uniform_int_distribution<int> distribution(0, sizeof(characters) - 2);
+    std::string data;
+    data.reserve(length);
+    for (int i = 0; i < length; ++i)
+        data += characters[distribution(randomEngine)];
+    return data;
 }
 
 net::awaitable<void> LoginController::setup_server(code_t& auth_code) {

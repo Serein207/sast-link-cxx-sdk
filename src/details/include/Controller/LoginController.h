@@ -17,6 +17,8 @@ public:
 private:
     boost::asio::awaitable<void> setup_server(code_t& auth_code);
 
+    static std::string generate_crypto_random_string(int length);
+
     std::unique_ptr<HttpServer> _login_redirect_server = nullptr;
     std::string _state;
     std::string _code_verifier;
