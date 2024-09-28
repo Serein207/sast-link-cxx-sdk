@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-project(sast-link VERSION 1.5.0 LANGUAGES CXX)
+project(sast-link VERSION 1.6.0 LANGUAGES CXX)
 
 find_package(spdlog REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system url beast)
@@ -22,16 +22,17 @@ if(BUILD_EXAMPLE)
     add_subdirectory(example)
 endif()
 
-
 set(LIB_TYPE STATIC)
 
 if(BUILD_SAST_LINK_SHARED)
     set(LIB_TYPE SHARED)
 endif()
 
-add_subdirectory(src/details)
-
-add_library(${PROJECT_NAME} ${LIB_TYPE} src/lib.cc include/sast_link.h)
+add_library(${PROJECT_NAME} ${LIB_TYPE} 
+    src/lib.cc 
+    src/details/HttpServer.cc
+    src/details/LoginController.cc
+)
 
 include(GNUInstallDirs)
 
@@ -40,7 +41,19 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE sast-link_details Boost::beast)
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/details/include
+)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    Boost::beast 
+    Boost::system 
+    Boost::url
+    OpenSSL::SSL 
+    spdlog::spdlog 
+    OpenSSL::Crypto
+    OpenSSL::SSL
+)
 
 if(MSVC)
     target_compile_definitions(${PROJECT_NAME}
