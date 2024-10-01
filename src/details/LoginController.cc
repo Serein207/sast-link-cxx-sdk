@@ -6,6 +6,7 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <spdlog/spdlog.h>
+#include <thread>
 
 namespace sast_link::details {
 
@@ -110,17 +111,22 @@ static constexpr std::string_view ERROR_RESPONSE = R"(
 )";
 
 static void open_url(std::string_view url) {
-    using namespace std::string_literals;
-    std::string url_str = "\""s + url.data() + "\"";
+    constexpr auto commandFmtStr =
 #ifdef __linux__
-    system(("xdg-open "s + url_str).c_str());
+        R"(xdg-open "{}")";
 #elif defined(_WIN32) || defined(_WIN64)
-    system(("start \"\" "s + url_str).c_str());
+        R"(start "" "{}")";
 #elif defined(__APPLE__)
-    system(("open "s + url_str).c_str());
+        R"(open "{}")";
 #else
-    spdlog::error("unsupported os");
+#error "Unsupported platform"
 #endif
+    auto command = std::format(commandFmtStr, url);
+    std::thread{[commandFmtStr, command] {
+        if (auto result = std::system(command.c_str())) {
+            spdlog::error("Failed to open browser, error code: {}", result);
+        }
+    }}.detach();
 }
 
 static std::string base64_encode(const unsigned char* input, size_t length) {
