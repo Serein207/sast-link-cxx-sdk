@@ -4,10 +4,14 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if (POLICY CMP0167)
+  cmake_policy(SET CMP0167 OLD)
+endif()
+
 project(sast-link VERSION 1.6.1 LANGUAGES CXX)
 
 find_package(spdlog REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system url beast)
+find_package(Boost REQUIRED COMPONENTS system url)
 find_package(OpenSSL 3.0 REQUIRED)
 
 set(BUILD_EXAMPLE OFF CACHE BOOL "Build sast-link example" FORCE)
@@ -46,7 +50,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
-    Boost::beast 
     Boost::system 
     Boost::url
     OpenSSL::SSL 
