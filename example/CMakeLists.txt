@@ -8,7 +8,7 @@ project(example VERSION 0.1.0 LANGUAGES CXX)
 
 add_executable(example main.cc)
 
-target_link_libraries(example PRIVATE sast-link Boost::beast)
+target_link_libraries(example PRIVATE sast-link Boost::system)
 
 # On Windows, copy the sast link DLL next to the application binary so that it's found.
 if(WIN32)
